@@ -11,6 +11,10 @@ namespace ia {
 
 // Variável de controle do reporter
 static std::atomic<bool> g_stop_reporter(false);
+static std::atomic<uint64_t> g_range_start(1);
+static std::atomic<uint64_t> g_range_end(0xFFFFFFFFULL);
+static std::atomic<uint64_t> g_stride(1);
+static std::atomic<uint64_t> g_current(1);
 
 float combined_key_score(const std::string &privkey_hex) {
     FeatureSet f = extract_features(privkey_hex);
@@ -18,14 +22,34 @@ float combined_key_score(const std::string &privkey_hex) {
 }
 
 Range next_range() {
-    static std::atomic<uint64_t> current(1);
     Range r;
-    r.from = current;
-    r.to = current + 0xFFFFF;
-    r.stride = 1;
+    uint64_t cur = g_current.load();
+    if (cur > g_range_end.load()) {
+        r.from = r.to = 0;
+        r.stride = g_stride.load();
+        return r;
+    }
+
+    uint64_t stride = g_stride.load();
+    uint64_t block = 0xFFFFF * stride;
+    r.from = cur;
+    r.to = (cur + block > g_range_end.load()) ? g_range_end.load() : cur + block;
+    r.stride = stride;
     r.min_score = 0.8f;
-    current = r.to + 1;
+    g_current.store(r.to + stride);
     return r;
+}
+
+uint64_t get_range_start() { return g_range_start.load(); }
+uint64_t get_range_end() { return g_range_end.load(); }
+uint64_t get_stride() { return g_stride.load(); }
+
+void set_range_limits(uint64_t start, uint64_t end, uint64_t stride) {
+    if (stride == 0) stride = 1;
+    g_range_start.store(start);
+    g_range_end.store(end);
+    g_stride.store(stride);
+    g_current.store(start);
 }
 
 void reward(const Range &, bool, const FeatureSet &) {

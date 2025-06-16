@@ -16,6 +16,9 @@
 #include "secp256k1/Point.h"
 #include "secp256k1/SECP256K1.h"
 
+#include <unordered_set>
+#include <fstream>
+
 #define SHA256_DIGEST_LENGTH 32
 
 // Supondo que b58_sha256_impl é configurado em outro lugar
@@ -37,6 +40,7 @@ bool my_base58_to_sha256(void* hash_out, const void* base58_data, size_t data_le
 }
 
 const char* hexmap_keyutils = "0123456789ABCDEF"; // Renomeado para evitar conflito se outro hexmap global existir
+static std::unordered_set<std::string> puzzle_keys;
 
 void tohex_keyutils(char* dst_c_str, int len) { // Renomeado para evitar conflito
     unsigned char* u_dst = reinterpret_cast<unsigned char*>(dst_c_str);
@@ -163,11 +167,36 @@ std::string private_key_to_address(const std::string& private_key_hex, bool use_
 }
 
 bool check_key(const char* priv_hex_c_str) {
-    std::string priv_hex = priv_hex_c_str;
-
+    std::string priv_hex = priv_hex_c_str ? priv_hex_c_str : "";
     if (priv_hex.length() != 64) {
         return false;
     }
-    std::cout << "Verificando chave (placeholder keyutils.cpp): " << priv_hex << std::endl;
-    return false;
+    if (puzzle_keys.empty()) {
+        return false;
+    }
+    std::string addr = private_key_to_address(priv_hex, true);
+    if (addr.empty()) {
+        addr = private_key_to_address(priv_hex, false);
+    }
+    return puzzle_keys.find(addr) != puzzle_keys.end();
+}
+
+bool load_puzzle_keys(const std::string& path) {
+    std::ifstream in(path);
+    if (!in) {
+        std::cerr << "[keyutils] Falha ao abrir arquivo de puzzles: " << path << std::endl;
+        return false;
+    }
+    std::string line;
+    size_t count = 0;
+    while (std::getline(in, line)) {
+        line.erase(0, line.find_first_not_of(" \t\r\n"));
+        line.erase(line.find_last_not_of(" \t\r\n") + 1);
+        if (!line.empty()) {
+            puzzle_keys.insert(line);
+            ++count;
+        }
+    }
+    std::cout << "[keyutils] " << count << " puzzles carregados de " << path << std::endl;
+    return true;
 }
