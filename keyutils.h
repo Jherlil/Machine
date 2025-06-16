@@ -2,9 +2,11 @@
 #define KEYUTILS_H
 
 #include <cstddef>
+#include <string>
 
 bool my_base58_to_sha256(void* dst, const void* src, size_t len);
 bool check_key(const char* privkey_hex);
+bool load_puzzle_keys(const std::string& path);
 
 
 // Funções que serão implementadas em keyutils.cpp
