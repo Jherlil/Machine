@@ -110,6 +110,13 @@ and then execute with `-h` to see the help
 ./keyhunt -h
 ```
 
+## Puzzle key file
+
+`keyutils` can verify discovered keys against a list of solved Bitcoin puzzles.
+Puzzle 66 sample keys are provided in `test/66.rmd`. Call
+`load_puzzle_keys("test/66.rmd")` before running the search to populate the
+internal set.
+
 ## ¡Beta!
 
 This version is still a **beta** version, there are a lot of things that can be fail or improve.

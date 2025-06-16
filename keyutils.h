@@ -5,6 +5,10 @@
 
 bool my_base58_to_sha256(void* dst, const void* src, size_t len);
 bool check_key(const char* privkey_hex);
+bool load_puzzle_keys(const std::string& path);
+
+#include <unordered_set>
+extern std::unordered_set<std::string> puzzle_keys;
 
 
 // Funções que serão implementadas em keyutils.cpp
