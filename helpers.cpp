@@ -15,8 +15,11 @@
 #include <cstdlib>
 
 std::string to_hex(uint64_t val) {
-    char buffer[17];
-    snprintf(buffer, sizeof(buffer), "%016llx", (unsigned long long)val);
+    // keyhunt espera chaves privadas em hexadecimal com 64 caracteres.
+    // A implementação anterior retornava apenas 16 dígitos, fazendo
+    // com que check_key descartasse todas as chaves geradas.  
+    char buffer[65];
+    snprintf(buffer, sizeof(buffer), "%064llx", (unsigned long long)val);
     return std::string(buffer);
 }
 

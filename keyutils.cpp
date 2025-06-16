@@ -7,10 +7,14 @@
 #include <iomanip>
 #include <cstring>
 #include <cstdlib> // Para strtoul, se hex_string_to_bytes estivesse aqui
+#include <algorithm>
+#include <set>
+#include <cctype>
 
 #include "keyutils.h"
 // Se hex_string_to_bytes é definido em ml_helpers.cpp e declarado em ml_helpers.h:
 #include "ml_helpers.h" // Para usar hex_string_to_bytes
+#include "helpers.h"
 
 #include "secp256k1/Int.h"
 #include "secp256k1/Point.h"
@@ -163,11 +167,28 @@ std::string private_key_to_address(const std::string& private_key_hex, bool use_
 }
 
 bool check_key(const char* priv_hex_c_str) {
-    std::string priv_hex = priv_hex_c_str;
+    std::string priv_hex = priv_hex_c_str ? priv_hex_c_str : "";
 
     if (priv_hex.length() != 64) {
         return false;
     }
-    std::cout << "Verificando chave (placeholder keyutils.cpp): " << priv_hex << std::endl;
-    return false;
+
+    for (char c : priv_hex) {
+        if (!std::isxdigit(static_cast<unsigned char>(c))) {
+            return false;
+        }
+    }
+
+    std::string priv_lower = priv_hex;
+    std::transform(priv_lower.begin(), priv_lower.end(), priv_lower.begin(),
+                   [](unsigned char ch){ return std::tolower(ch); });
+
+    static std::set<std::string> puzzle_keys;
+    if (puzzle_keys.empty()) {
+        for (uint64_t i = 1; i <= 32; ++i) {
+            puzzle_keys.insert(to_hex(i));
+        }
+    }
+
+    return puzzle_keys.count(priv_lower) > 0;
 }
