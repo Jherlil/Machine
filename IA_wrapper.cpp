@@ -47,8 +47,13 @@ Range next_range() {
     r.min_score = 0.8f;
     g_current.store((r.to >= end) ? g_range_start.load() : r.to + g_stride.load());
 
-    std::cout << "[IA] Searching range 0x" << std::hex << r.from
-              << " - 0x" << r.to << " (stride " << std::dec << r.stride << ")" << std::endl;
+    static auto last_log = std::chrono::steady_clock::now() - std::chrono::seconds(30);
+    auto now = std::chrono::steady_clock::now();
+    if (now - last_log >= std::chrono::seconds(30)) {
+        std::cout << "[IA] Searching range 0x" << std::hex << r.from
+                  << " - 0x" << r.to << " (stride " << std::dec << r.stride << ")" << std::endl;
+        last_log = now;
+    }
 
     return r;
 }

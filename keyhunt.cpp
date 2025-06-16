@@ -20,8 +20,9 @@ email: albertobsd@gmail.com
 #include "IA_wrapper.h"
 #include "helpers.h"
 #include "RL_agent.h"
-#include <iostream> 
-#include <sstream>   
+#include <iostream>
+#include <sstream>
+#include <omp.h>
 
 
 #include "secp256k1/SECP256K1.h"
@@ -1073,6 +1074,43 @@ case 'r': {
 		}
 	}
 	
+// ------------------------------------------------------------
+// defina o n\u00famero de threads OpenMP de acordo com -t <n>
+// ------------------------------------------------------------
+omp_set_num_threads(NTHREADS > 0 ? NTHREADS : 1);
+
+/* =======================================================================
+   LOOP DE BUSCA GUIADO PELA IA \u2013 modos address / rmd160
+   =======================================================================
+*/
+if (FLAGMODE == MODE_ADDRESS || FLAGMODE == MODE_RMD160) {
+        while (true) {
+                ia::Range cur = ia::next_range();        // IA decide o pr\u00f3ximo range
+
+                if (!FLAGQUIET) {
+                        printf("[IA] Range 0x%llx \u2013 0x%llx (stride %llu)\n",
+                               (unsigned long long)cur.from,
+                               (unsigned long long)cur.to,
+                               (unsigned long long)cur.stride);
+                }
+
+                #pragma omp parallel for schedule(dynamic,256)
+                for (uint64_t k = cur.from; k <= cur.to; k += cur.stride) {
+                        std::string priv_hex = to_hex(k);
+
+                        if (!ia::keep_key(priv_hex, cur)) continue;  // filtragem IA
+
+                        bool hit = check_key(priv_hex.c_str());     // verifica\u00e7\u00e3o real
+
+                        FeatureSet f = extract_features(priv_hex);
+                        RLAgent::observe(f, MLEngine::ml_predict(f.to_vector()), hit);
+                        ia::reward(cur, hit, f);
+                }
+
+                RLAgent::learn();  // atualiza o agente RL
+        }
+        return 0;   // nunca chega aqui a menos que o loop seja interrompido externamente
+}
 	if(FLAGMODE == MODE_BSGS )	{
 		printf("[+] Opening file %s\n",fileName);
 		fd = fopen(fileName,"rb");
