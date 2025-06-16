@@ -20,8 +20,9 @@ email: albertobsd@gmail.com
 #include "IA_wrapper.h"
 #include "helpers.h"
 #include "RL_agent.h"
-#include <iostream> 
-#include <sstream>   
+#include <iostream>
+#include <sstream>
+#include <iomanip>
 
 
 #include "secp256k1/SECP256K1.h"
@@ -1037,6 +1038,7 @@ case 'r': {
 					fprintf(stderr,"[E] Unenexpected error\n");
 					exit(EXIT_FAILURE);
 				}
+                                load_puzzle_keys(fileName);
 			break;
 			case MODE_VANITY:
 				if(!readFileVanity(fileName))	{
@@ -2458,10 +2460,29 @@ void *thread_process_minikeys(void *vargp)	{
 	thread_number = tt->nt;
 	free(tt);
 	rawbuffer = (char*) &counter.bits64;
-	count_valid = 0;
+        count_valid = 0;
+
+        // Configure IA search range based on parsed arguments
+        {
+                char* s_str = n_range_start.GetBase10();
+                char* e_str = n_range_end.GetBase10();
+                char* st_str = stride.GetBase10();
+                ia::set_range_limits(strtoull(s_str, nullptr, 10), strtoull(e_str, nullptr, 10), strtoull(st_str, nullptr, 10));
+                free(s_str); free(e_str); free(st_str);
+        }
 
 while (true) {
     ia::Range cur = ia::next_range();  // IA decide a faixa
+    uint64_t total = ia::get_range_end() - ia::get_range_start() + 1;
+    uint64_t pos = cur.from - ia::get_range_start();
+    double pct = total ? (100.0 * pos / total) : 0.0;
+    int barWidth = 40;
+    int filled = static_cast<int>((pct / 100.0) * barWidth);
+    std::cout << "\r[IA] [";
+    for (int i = 0; i < barWidth; ++i) std::cout << (i < filled ? '#' : ' ');
+    std::cout << "] " << std::fixed << std::setprecision(2) << pct
+              << "% 0x" << std::hex << cur.from << "-0x" << cur.to << std::dec
+              << std::flush;
 
     #pragma omp parallel for
     for (uint64_t k = cur.from; k <= cur.to; k += cur.stride) {

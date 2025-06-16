@@ -184,6 +184,9 @@ Test your luck with the random parameter `-R` againts the puzzle #66
 ```
 ./keyhunt -m address -f tests/66.txt -b 66 -l compress -R -q -s 10
 ```
+Puzzle files with target addresses should reside in the `tests/` directory or
+another path passed with `-f`. `keyhunt` now loads these values through
+`load_puzzle_keys` so ensure the file exists before running.
 
 Please note the change from `-r 1:FFFFFFFF` to `-b 66`, with -b you can specify the bit range
 
