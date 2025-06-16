@@ -547,6 +547,9 @@ ia::start_reporter();
 std::cout << "[INIT] Módulos de IA e RL prontos." << std::endl; std::cout.flush();
 std::cout << "[DEBUG] Depois de ia::start_reporter e pronto para processar argumentos." << std::endl; std::cout.flush();
 
+// Carrega chaves do puzzle 66 para verificação
+load_puzzle_keys("test/66.rmd");
+
 
 while ((c = getopt(argc, argv, "deh6MqRSB:b:c:C:E:f:I:k:l:m:N:n:p:r:s:t:v:G:8:z:")) != -1) {
 		switch(c) {

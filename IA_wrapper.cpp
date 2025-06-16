@@ -25,6 +25,8 @@ Range next_range() {
     r.stride = 1;
     r.min_score = 0.8f;
     current = r.to + 1;
+    std::cout << "[IA] Procurando range 0x" << std::hex << r.from
+              << " - 0x" << r.to << std::dec << std::endl;
     return r;
 }
 
