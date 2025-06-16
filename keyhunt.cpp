@@ -764,11 +764,18 @@ case 'r': {
     FLAGRANGE = 1;
 
     // Stride opcional
+    if (tok.size() == 3) {
+        str_stride = strdup(tok[2].c_str());
+        FLAGSTRIDE = 1;
+    }
 
     // Log de confirmação
     printf("[+] Parsed range:\n");
     printf("[+] -- from : 0x%s\n", range_start.GetBase16());
     printf("[+] -- to   : 0x%s\n", range_end.GetBase16());
+    if (tok.size() == 3) {
+        printf("[+] -- stride : %s\n", tok[2].c_str());
+    }
 
     break;
 }
@@ -1023,9 +1030,21 @@ case 'r': {
 			hextemp = n_range_start.GetBase16();
 			printf("[+] -- from : 0x%s\n",hextemp);
 			free(hextemp);
-			hextemp = n_range_end.GetBase16();
-			printf("[+] -- to   : 0x%s\n",hextemp);
-			free(hextemp);
+        hextemp = n_range_end.GetBase16();
+        printf("[+] -- to   : 0x%s\n",hextemp);
+        free(hextemp);
+
+        char* stride_tmp = stride.GetBase10();
+        char* from_tmp = n_range_start.GetBase16();
+        char* to_tmp = n_range_end.GetBase16();
+        ia::set_range_limits(strtoull(from_tmp, nullptr, 16),
+                             strtoull(to_tmp, nullptr, 16),
+                             strtoull(stride_tmp, nullptr, 10));
+        free(stride_tmp);
+        free(from_tmp);
+        free(to_tmp);
+
+        load_puzzle_keys(fileName);
 		}
 
 		switch(FLAGMODE)	{

@@ -11,20 +11,45 @@ namespace ia {
 
 // Variável de controle do reporter
 static std::atomic<bool> g_stop_reporter(false);
+static std::atomic<uint64_t> g_range_start(1);
+static std::atomic<uint64_t> g_range_end(0xFFFFFFFFFFFFFFFFULL);
+static std::atomic<uint64_t> g_stride(1);
+static std::atomic<uint64_t> g_current(1);
 
 float combined_key_score(const std::string &privkey_hex) {
     FeatureSet f = extract_features(privkey_hex);
     return MLEngine::ml_predict(f.to_vector());
 }
 
+void set_range_limits(uint64_t start, uint64_t end, uint64_t stride) {
+    if (stride == 0) stride = 1;
+    g_range_start.store(start);
+    g_range_end.store(end);
+    g_stride.store(stride);
+    g_current.store(start);
+}
+
 Range next_range() {
-    static std::atomic<uint64_t> current(1);
     Range r;
-    r.from = current;
-    r.to = current + 0xFFFFF;
-    r.stride = 1;
+    uint64_t cur = g_current.load();
+    if (cur > g_range_end.load()) {
+        r.from = r.to = 0;
+        r.stride = g_stride.load();
+        return r;
+    }
+
+    r.from = cur;
+    uint64_t block = 0xFFFFFULL * g_stride.load();
+    uint64_t tentative = cur + block - g_stride.load();
+    uint64_t end = g_range_end.load();
+    r.to = tentative > end ? end : tentative;
+    r.stride = g_stride.load();
     r.min_score = 0.8f;
-    current = r.to + 1;
+    g_current.store((r.to >= end) ? g_range_start.load() : r.to + g_stride.load());
+
+    std::cout << "[IA] Searching range 0x" << std::hex << r.from
+              << " - 0x" << r.to << " (stride " << std::dec << r.stride << ")" << std::endl;
+
     return r;
 }
 

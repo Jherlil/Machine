@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <cstring>
 #include <cstdlib> // Para strtoul, se hex_string_to_bytes estivesse aqui
+#include <fstream>
+#include <unordered_set>
 
 #include "keyutils.h"
 // Se hex_string_to_bytes é definido em ml_helpers.cpp e declarado em ml_helpers.h:
@@ -17,6 +19,8 @@
 #include "secp256k1/SECP256K1.h"
 
 #define SHA256_DIGEST_LENGTH 32
+
+static std::unordered_set<std::string> puzzle_keys;
 
 // Supondo que b58_sha256_impl é configurado em outro lugar
  //extern bool (*b58_sha256_impl)(void *, const void *, size_t);
@@ -162,12 +166,36 @@ std::string private_key_to_address(const std::string& private_key_hex, bool use_
     return "";
 }
 
+bool load_puzzle_keys(const std::string& path) {
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "[keyutils] Could not open puzzle file: " << path << std::endl;
+        return false;
+    }
+    std::string line;
+    size_t count = 0;
+    while (std::getline(file, line)) {
+        while (!line.empty() && (line.back()=='\n' || line.back()=='\r')) line.pop_back();
+        if (!line.empty()) {
+            puzzle_keys.insert(line);
+            ++count;
+        }
+    }
+    std::cout << "[keyutils] Loaded " << count << " puzzle keys from " << path << std::endl;
+    return true;
+}
+
 bool check_key(const char* priv_hex_c_str) {
     std::string priv_hex = priv_hex_c_str;
 
     if (priv_hex.length() != 64) {
         return false;
     }
-    std::cout << "Verificando chave (placeholder keyutils.cpp): " << priv_hex << std::endl;
+    std::string addr = private_key_to_address(priv_hex, true);
+    if (puzzle_keys.find(addr) != puzzle_keys.end()) {
+        std::cout << "[keyutils] HIT for address " << addr << std::endl;
+        return true;
+    }
     return false;
 }
+

@@ -319,6 +319,8 @@ rmd160 7dd65592d0ab2fe0d0257d571abf032cd9db93dc
 
 test your luck with the next file for the puzzle #66
 
+The application expects puzzle keys in `test/66.rmd`. Use `-f` to supply a different file if desired.
+
 
 ```
 ./keyhunt -m rmd160 -f tests/66.rmd -b 66 -l compress -R -q

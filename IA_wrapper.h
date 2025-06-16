@@ -21,6 +21,7 @@ struct Range {
 float combined_key_score(const std::string &privkey_hex);
 bool keep_key(const std::string &privkey_hex, const Range &r);
 Range next_range();
+void set_range_limits(uint64_t start, uint64_t end, uint64_t stride = 1);
 void reward(const Range &r, bool hit, const FeatureSet &features); // ✅ Agora sem "struct"
 void start_reporter();
 void stop_reporter();
