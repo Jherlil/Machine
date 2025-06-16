@@ -39,6 +39,7 @@ bool my_base58_to_sha256(void* hash_out, const void* base58_data, size_t data_le
     return true;
 }
 
+
 const char* hexmap_keyutils = "0123456789ABCDEF"; // Renomeado para evitar conflito se outro hexmap global existir
 static std::unordered_set<std::string> puzzle_keys;
 

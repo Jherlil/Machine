@@ -2499,7 +2499,10 @@ while (true) {
         }
 
         // --- Filtro por score (IA dita se continua ou pula) ---
-		printf("[IA DEBUG] Range 0x%llx - 0x%llx → Score: %.4f\n", range_start, range_end, score);
+        printf("[IA DEBUG] Range 0x%llx - 0x%llx \342\206\222 Score: %.4f\n",
+               (unsigned long long)cur.from,
+               (unsigned long long)cur.to,
+               score);
 
         if (score < 0.8)
             continue;
