@@ -50,7 +50,10 @@ static bool xgb_loaded = false;
 static bool lgb_loaded = false;
 static bool cnn_g_loaded = false;
 
-const int INPUT_DIM_FEATURES = 29;
+// FeatureSet::to_vector() returns 28 elements, so the models expect
+// exactly 28 input features.  Using a different number causes the
+// TorchScript and XGBoost models to fail with shape mismatches.
+const int INPUT_DIM_FEATURES = 28;
 
 static std::vector<std::vector<float>> g_puzzle_pattern_features;
 static std::mutex ml_mutex; // Mutex global para operações de ML críticas
