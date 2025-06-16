@@ -11,7 +11,8 @@ import time
 from multiprocessing import Pool, cpu_count
 import zlib
 import warnings
-import shutil # Para copiar arquivos de modelo
+import shutil  # Para copiar arquivos de modelo
+from tqdm import tqdm
 
 # Modelos tradicionais
 import xgboost as xgb
@@ -334,7 +335,12 @@ def extract_features_parallel(df):
     pool_results = []
     try:
         with Pool(processes=num_processes) as pool:
-            pool_results = pool.map(extract_features_chunk, chunks_with_ids)
+            for res in tqdm(
+                pool.imap_unordered(extract_features_chunk, chunks_with_ids),
+                total=len(chunks_with_ids),
+                desc="[Train] Extraindo features",
+            ):
+                pool_results.append(res)
     except Exception as e_pool:
         print(f"[Train] Erro CRÍTICO durante o processamento em paralelo: {e_pool}")
         # Return empty arrays and original df in case of pool error
@@ -393,10 +399,38 @@ def load_data_with_feature_extraction(path):
         print(f"[Train] Lendo CSV completo de '{path}'...")
         # Especificar dtypes para colunas problemáticas e score
         # Manter low_memory=False para melhor inferência de tipos onde não especificado, apesar de consumir mais memória
-        df_full = pd.read_csv(path, sep=",", skipinitialspace=True, low_memory=False,
-                              dtype={'priv_hex': str, 'wif': str, 'address': str,
-                                     'addr2_p2pkh_uncomp': str, 'priv_binary': str,
-                                     'score': np.float32}) # Explicit float32 para score
+        try:
+            df_full = pd.read_csv(
+                path,
+                sep=",",
+                skipinitialspace=True,
+                low_memory=False,
+                dtype={
+                    'priv_hex': str,
+                    'wif': str,
+                    'address': str,
+                    'addr2_p2pkh_uncomp': str,
+                    'priv_binary': str,
+                    'score': np.float32,
+                },
+                engine="pyarrow",
+                use_threads=True,
+            )
+        except Exception:
+            df_full = pd.read_csv(
+                path,
+                sep=",",
+                skipinitialspace=True,
+                low_memory=False,
+                dtype={
+                    'priv_hex': str,
+                    'wif': str,
+                    'address': str,
+                    'addr2_p2pkh_uncomp': str,
+                    'priv_binary': str,
+                    'score': np.float32,
+                },
+            )
         print(f"[Train] Colunas lidas de '{path}': {list(df_full.columns)}")
 
         if df_full.empty:
