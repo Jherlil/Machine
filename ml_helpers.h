@@ -47,17 +47,39 @@ struct FeatureSet {
     float addr_type_p2sh_custom   = 0.0f;
     float addr_type_bech32_custom = 0.0f;
 
+    // Returns the feature vector in the exact order expected by the
+    // trained ML models. The models were built using 28 features, so we
+    // intentionally exclude `addr2_type` from the output even though it is
+    // stored in the struct.
     std::vector<float> to_vector() const {
         return {
-            priv_hex_len, priv_hex_zero_prefix, priv_hex_zero_suffix,
-            priv_hex_entropy, priv_hex_palindrome, is_mod_2, is_mod_4,
-            is_mod_8, priv_hex_sympy_score, wif_present, base58_wif_len,
-            base58_wif_unique, base58_entropy, addr1_len, addr1_type,
-            addr2_present, addr2_len, addr2_type,
-            seed_word_count, seed_entropy,
-            symmetry, longest_one_run, bin_palindrome, wif_valid_custom,
-            is_compressed_custom, addr_entropy_custom,
-            addr_type_p2pkh_custom, addr_type_p2sh_custom,
+            priv_hex_len,
+            wif_present,
+            addr1_type,
+            addr2_present,
+            addr2_len,
+            seed_word_count,
+            seed_entropy,
+            symmetry,
+            longest_one_run,
+            bin_palindrome,
+            base58_wif_len,
+            base58_wif_unique,
+            addr1_len,
+            priv_hex_zero_prefix,
+            priv_hex_zero_suffix,
+            priv_hex_entropy,
+            priv_hex_palindrome,
+            is_mod_2,
+            is_mod_4,
+            is_mod_8,
+            priv_hex_sympy_score,
+            base58_entropy,
+            wif_valid_custom,
+            is_compressed_custom,
+            addr_entropy_custom,
+            addr_type_p2pkh_custom,
+            addr_type_p2sh_custom,
             addr_type_bech32_custom
         };
     }
